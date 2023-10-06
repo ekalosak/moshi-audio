@@ -1,4 +1,15 @@
+import os
 
+from google.cloud import speech as stt
+
+from loguru import logger
+from moshi import traced
+
+from .exceptions import TranscriptionError
+
+GCLOUD_PROJECT = os.getenv("GCP_PROJECT", None)
+client = stt.SpeechClient(project=GCLOUD_PROJECT)
+logger.info(f"Speech client initialized, using project: {client.project}")
 
 @traced
 def transcribe(aud: str | bytes, bcp47: str) -> str:
@@ -28,18 +39,13 @@ def transcribe(aud: str | bytes, bcp47: str) -> str:
             raise TypeError(f"Invalid type for 'aud': {type(aud)}")
         logger.debug(f"RecognitionConfig: type(aud)={type(aud)} config={config}")
         logger.debug(f"RecognitionAudio: {audio if isinstance(aud, str) else 'bytes: ommitted'}")
-        response = sclient.recognize(config=config, audio=audio)
+        response = client.recognize(config=config, audio=audio)
         logger.debug(f"response={response}")
         try:
             text = response.results[0].alternatives[0].transcript
             conf = response.results[0].alternatives[0].confidence
         except IndexError as exc:
-            logger.debug(exc)
-            logger.error("No transcription found. Usually this means silent audio, but it could be corrupted audio.")
-            text = "👂❌ We couldn't hear you. Please ensure your microphone is enabled, and try holding the button down for 1/2 sec before you speak."
-            conf = 1.0
+            raise TranscriptionError("No transcription found. Usually this means silent audio, but it could be corrupted audio.") from exc
         with logger.contextualize(confidence=conf):
-            logger.log("TRANSCRIPT", shorten(text, 96))
+            logger.log("TRANSCRIPT", text)
         return text
-
-logger.success("Speech module loaded.")
