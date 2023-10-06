@@ -23,7 +23,6 @@ class Voice(Versioned):
     ssml_gender: int  # 1 male 2 female
     type: Literal['wavenet', 'standard']  # standard  data['type']
 
-
     def __init__(self, bcp47: str=None, tts_voice: tts.Voice=None, **kwargs):
         if not bcp47 and not tts_voice:
             raise ValueError("Must provide either bcp47 or tts_voice.")
@@ -36,6 +35,15 @@ class Voice(Versioned):
                 logger.warning(f"Voice ({tts_voice.name}) has multiple language codes, only using first: {tts_voice.language_codes}")
             super().__init__(bcp47=tts_voice.language_codes[0], **kwargs)
 
+    def __eq__(self, other):
+        if isinstance(other, Voice):
+            return self.bcp47 == other.bcp47 and self.model == other.model
+        return False
+
+    @property
+    def audio_version(self) -> str:
+        return self._audio_version
+
     @classmethod
     def _kwargs_from_docpath(cls, docpath: DocPath) -> dict:
         return dict(bcp47=docpath.parts[2]) 
@@ -45,17 +53,6 @@ class Voice(Versioned):
 
     def docpath(self):
         return self.get_docpath(self.bcp47)
-
-    @property
-    def audio_version(self) -> str:
-        return self._audio_version
-
-    def gender_match(self, g2: int | 'Voice' | tts.SsmlVoiceGender) -> bool:
-        if hasattr(g2, 'ssml_gender'):
-            g2 = g2.ssml_gender
-        if self.ssml_gender not in (1, 2):
-            raise ValueError(f"SSML Gender not yet supported: {self.ssml_gender}")
-        return self.ssml_gender == g2
 
     @traced
     @staticmethod
