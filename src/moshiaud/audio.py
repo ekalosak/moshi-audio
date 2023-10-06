@@ -6,21 +6,20 @@
 import io
 import os
 from pathlib import Path
-import tempfile
 from textwrap import shorten
 
 import av
-from google.cloud import storage
+from google.cloud.storage import Client
 from loguru import logger
 import numpy as np
 
-from moshi.utils import wavfile
-from moshi.utils.log import traced
+from moshi import traced
+from . import wavfile
 
-AUDIO_BUCKET = os.getenv("AUDIO_BUCKET", "moshi-3.appspot.com")  # NOTE default is emulator bucket
-logger.info(f"AUDIO_BUCKET={AUDIO_BUCKET}")
-
-store = storage.Client()
+# GCLOUD_PROJECT = os.getenv("GCLOUD_PROJECT")
+# if not GCLOUD_PROJECT:
+#     logger.warning("GCLOUD_PROJECT not set, using default")
+# sto = Client(GCLOUD_PROJECT)
 
 def energy(af: av.AudioFrame) -> float:
     """Calculate the RMS energy of an audio frame."""
@@ -87,41 +86,6 @@ def af2wav(af: av.AudioFrame) -> io.BytesIO:
     af = af.to_ndarray()
     wav = wavfile.write(af)
     return wav
-
-@traced
-def download(audio_path: str, tmp: str=None) -> str:
-    """Download an audio file from storage to a local temporary file.
-    Caller is responsible for deleting the temporary file.
-    Optional tmp path.
-    Returns:
-        tfn: the path to the temporary file.
-    """
-    logger.debug(f"audio_path={audio_path}")
-    with logger.contextualize(audio_bucket=AUDIO_BUCKET, audio_path=audio_path):
-        logger.trace("Creating objects...")
-        afl = Path(audio_path)
-        if tmp is None:
-            _, tmp = tempfile.mkstemp(suffix=afl.suffix, prefix=afl.stem, dir='/tmp')
-        bucket = store.bucket(AUDIO_BUCKET)
-        blob = bucket.blob(audio_path)
-        logger.trace("Downloading bytes...")
-        blob.download_to_filename(tmp)
-    return tmp
-
-@traced
-def upload(file_path: Path, storage_path: Path, bucket_name: str=AUDIO_BUCKET):
-    """Upload a file to storage.
-    Args:
-        file_path: the path to the file to upload.
-        storage_path: the path to the file in storage.
-        bucket: the storage bucket to upload to.
-    """
-    with logger.contextualize(file_path=file_path, storage_path=storage_path, bucket=bucket_name):
-        logger.trace("Creating objects...")
-        bucket = store.bucket(bucket_name)
-        blob = bucket.blob(str(storage_path))
-        logger.trace("Uploading bytes...")
-        blob.upload_from_filename(str(file_path))
 
 def make_ast_audio_name(usr_audio_storage_name: str) -> str:
     """From the user's audio storage name, make the name for the character's audio.
