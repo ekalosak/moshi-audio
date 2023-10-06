@@ -13,13 +13,7 @@ from google.cloud.storage import Client
 from loguru import logger
 import numpy as np
 
-from moshi import traced
 from . import wavfile
-
-# GCLOUD_PROJECT = os.getenv("GCLOUD_PROJECT")
-# if not GCLOUD_PROJECT:
-#     logger.warning("GCLOUD_PROJECT not set, using default")
-# sto = Client(GCLOUD_PROJECT)
 
 def energy(af: av.AudioFrame) -> float:
     """Calculate the RMS energy of an audio frame."""
@@ -45,7 +39,6 @@ def _wavb2af(wav: io.BytesIO) -> av.AudioFrame:
     layout = "stereo" if channels == 2 else "mono"
     assert channels == len(av.AudioLayout(layout).channels)
     format = av.AudioFormat("s16")
-    # logger.debug(f"sample_rate={sample_rate}, samples={samples}, channels={channels}, layout={layout}, planar={format.is_planar}")
     with logger.contextualize(sample_rate=sample_rate, samples=samples, channels=channels, layout=layout, planar=format.is_planar):
         try:
             af = av.AudioFrame.from_ndarray(arr.ravel().reshape(1, -1), format='s16', layout=layout)
