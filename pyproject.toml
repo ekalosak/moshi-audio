@@ -12,6 +12,7 @@ authors = [
 dependencies = [
   "av",
   "google-cloud-speech",
+  "google-cloud-storage",
   "google-cloud-translate",
   "google-cloud-texttospeech",
   "loguru",

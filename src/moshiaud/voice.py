@@ -6,17 +6,16 @@ from loguru import logger
 from typing import Literal
 
 from moshi import traced
-from moshi.storage import Versioned, DocPath
+from moshi.storage import DocPath
+from moshi.voice import Voice as BaseVoice
 from .__version__ import __version__
-
-# TODO refactor BaseVoice to moshi-base 
 
 GOOGLE_VOICE_SELECTION_TIMEOUT = int(os.getenv("GOOGLE_VOICE_SELECTION_TIMEOUT", 5))
 logger.info(f"GOOGLE_VOICE_SELECTION_TIMEOUT={GOOGLE_VOICE_SELECTION_TIMEOUT}")
 
-class Voice(Versioned):
-    _audio_version: str = __version__
+class Voice(BaseVoice):
     _tts_voice: tts.Voice = None
+    audio_version: str = __version__
     bcp47: str  # af-ZA  /config/voices doc -> af-ZA key -> af-ZA-Standard-A key -> data dict[str, str]
     model: str  # af-ZS-Standard-A  data['model']
     language_name: str  # Afrikaans (South Africa)  data['language_name']
@@ -74,38 +73,38 @@ class Voice(Versioned):
         ) for name, model in _voices.items()]
         return voices
 
-    # def get_voice(bcp47: str, gender="FEMALE", model="Standard", random_choice=False) -> str:
-    #     """Get a valid voice for the language. Just picks the first match.
-    #     Args:
-    #         - bcp47: Language code in BPC 47 format e.g. "en-US" https://www.rfc-editor.org/rfc/bcp/bcp47.txt
-    #         - gender: SSML Gender
-    #         - model: Voice model class (e.g. "Standard", "WaveNet")
-    #         - random_choice: if True, pick a random voice from the list of matches. If False, pick the first match.
-    #     Raises:
-    #         - ValueError if no voice found.
-    #     Source:
-    #         - https://cloud.google.com/text-to-speech/pricing for list of valid voice model classes
-    #     """
-    #     logger.debug(f"Getting voice for: {bcp47}")
-    #     voices = list_voices(bcp47)
-    #     logger.debug(f"Language {bcp47} has {len(voices)} supported voices.")
-    #     model_matches = []
-    #     for voice in voices:
-    #         if model.lower() in voice.name.lower():
-    #             model_matches.append(voice)
-    #     if len(model_matches) == 0:
-    #         logger.warning(f"No voice found for model={model}, using any model.")
-    #         model_matches = voices
-    #     gender_matches = []
-    #     for voice in model_matches:
-    #         if gender_match(gender, voice.ssml_gender):
-    #             gender_matches.append(voice)
-    #     if len(gender_matches) == 0:
-    #         logger.warning(f"No voice found for gender={gender}, using any model.")
-    #         gender_matches = model_matches
-    #     voices = gender_matches
-    #     if len(voices) > 0:
-    #         voice = random.choice(voices)
-    #         logger.debug(f"Found voice: ({voice.name} {voice.ssml_gender})")
-    #         return voice
-    #     raise ValueError(f"Voice not found for {bcp47}, gender={gender}, model={model}")
+    @classmethod
+    def get_voice(cls, bcp47: str, gender=2, model="Standard") -> 'Voice':
+        """Get a valid voice for the language. Just picks the first match.
+        Args:
+            - bcp47: Language code in BPC 47 format e.g. "en-US" https://www.rfc-editor.org/rfc/bcp/bcp47.txt
+            - gender: SSML Gender
+            - model: Voice model class (e.g. "Standard", "WaveNet")
+        Raises:
+            - ValueError if no voice found.
+        Source:
+            - https://cloud.google.com/text-to-speech/pricing for list of valid voice model classes
+        """
+        logger.debug(f"Getting voice for: {bcp47}")
+        voc: list[Voice] = Voice.list_voices(bcp47)
+        logger.debug(f"Language {bcp47} has {len(voices)} supported voices.")
+        model_matches = []
+        ...
+        # for voice in voices:
+        #     if model.lower() == voice.model
+        #         model_matches.append(voice)
+        # if len(model_matches) == 0:
+        #     logger.warning(f"No voice found for model={model}, using any model.")
+        #     model_matches = voices
+        # gender_matches = []
+        # for voice in model_matches:
+        #     if voice.
+        # if len(gender_matches) == 0:
+        #     logger.warning(f"No voice found for gender={gender}, using any model.")
+        #     gender_matches = model_matches
+        # voices = gender_matches
+        # if len(voices) > 0:
+        #     voice = random.choice(voices)
+        #     logger.debug(f"Found voice: ({voice.name} {voice.ssml_gender})")
+        #     return voice
+        # raise ValueError(f"Voice not found for {bcp47}, gender={gender}, model={model}")
