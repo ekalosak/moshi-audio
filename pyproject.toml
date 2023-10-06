@@ -1,0 +1,41 @@
+[project]
+name = "moshi-audio"
+version = "23.10.0"
+description = "Transcription and speech synthesis utilities."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = {text = "Proprietary"}
+keywords = ["audio", "speech", "transcription", "synthesis"]
+authors = [
+  {name = "Eric Kalosa-Kenyon", email = "moshi.feedback@gmail.com"}
+]
+dependencies = [
+  "av",
+  "google-cloud-translate",
+  "google-cloud-texttospeech",
+  "loguru",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-cov",
+]
+dev = [
+  "black",
+  "flake8",
+  "isort"
+]
+
+[project.urls]
+Homepage = "https://www.chatmoshi.com"
+Repository = "https://github.com/ekalosak/moshi-audio.git"
+
+
+[tool.pytest.ini_options]
+markers = [
+  "gcp: requires a Google Cloud Platform services.",
+]
+addopts = [
+  "--cov=moshi"
+]
