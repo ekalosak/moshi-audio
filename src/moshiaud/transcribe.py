@@ -7,9 +7,8 @@ from moshi import traced
 
 from .exceptions import TranscriptionError
 
-GCLOUD_PROJECT = os.getenv("GCP_PROJECT", None)
-client = stt.SpeechClient(project=GCLOUD_PROJECT)
-logger.info(f"Speech client initialized, using project: {client.project}")
+client = stt.SpeechClient()
+logger.info(f"Speech client initialized")
 
 @traced
 def transcribe(aud: str | bytes, bcp47: str) -> str:

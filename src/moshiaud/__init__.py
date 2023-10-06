@@ -1,3 +1,2 @@
-__version__ = "23.10.0"
-
+from .__version__ import __version__
 from .exceptions import TranscriptionError

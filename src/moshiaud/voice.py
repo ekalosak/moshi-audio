@@ -3,23 +3,37 @@ import os
 from google.cloud.firestore import Client
 from google.cloud import texttospeech as tts
 from loguru import logger
+from typing import Literal
 
 from moshi import traced
+from moshi.storage import Versioned
+from .__version__ import __version__
 
-# TODO move Voice to moshi-base..?
+# TODO refactor BaseVoice to moshi-base 
 
 GOOGLE_VOICE_SELECTION_TIMEOUT = int(os.getenv("GOOGLE_VOICE_SELECTION_TIMEOUT", 5))
 logger.info(f"GOOGLE_VOICE_SELECTION_TIMEOUT={GOOGLE_VOICE_SELECTION_TIMEOUT}")
 
-def gender_match(g1: str, g2: tts.SsmlVoiceGender) -> bool:
-    if g1.lower() not in ("male", "female"):
-        raise ValueError(f"SSML Gender not yet supported: {g1}")
-    if g1.lower() == "female" and g2 == 2:
-        return True
-    elif g1.lower() == "male" and g2 == 1:
-        return True
-    else:
-        return False
+class Voice(Versioned):
+    _audio_version: str = __version__
+    model: str  # af-ZS-Standard-A
+    language_name: str  # Afrikaans (South Africa)
+    ssml_gender: tts.SsmlVoiceGender
+    type: Literal['wavenet', 'standard']
+
+    @property
+    def audio_version(self) -> str:
+        return self._audio_version
+
+    def gender_match(g1: str, g2: tts.SsmlVoiceGender) -> bool:
+        if g1.lower() not in ("male", "female"):
+            raise ValueError(f"SSML Gender not yet supported: {g1}")
+        if g1.lower() == "female" and g2 == 2:
+            return True
+        elif g1.lower() == "male" and g2 == 1:
+            return True
+        else:
+            return False
 
 @traced
 def list_voices(bcp47: str, db: Client) -> list[tts.Voice]:
