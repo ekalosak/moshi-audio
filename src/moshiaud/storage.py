@@ -13,24 +13,27 @@ logger.info(f"AUDIO_BUCKET={AUDIO_BUCKET}")
 
 
 @traced
-def download(audio_path: str, store: Client) -> str:
+def download(audio_path: str | Path, store: Client, tmp: str | Path = None) -> str:
     """Download an audio file from storage to a local temporary file.
     Caller is responsible for deleting the temporary file.
-    Optional tmp path.
+    Args:
+        audio_path: the path to the audio file in storage.
+        store: the storage client.
+        tmp: the path to the temporary file; if not provided, a temporary file will be created.
     Returns:
-        tfn: the path to the temporary file.
+        the path to the temporary file.
     """
     logger.debug(f"audio_path={audio_path}")
-    with logger.contextualize(audio_bucket=AUDIO_BUCKET, audio_path=audio_path):
+    audio_path = Path(audio_path)
+    with logger.contextualize(audio_bucket=AUDIO_BUCKET, audio_path=str(audio_path)):
         logger.trace("Creating objects...")
-        afl = Path(audio_path)
         if tmp is None:
-            _, tmp = tempfile.mkstemp(suffix=afl.suffix, prefix=afl.stem, dir='/tmp')
+            _, tmp = tempfile.mkstemp(suffix=audio_path.suffix, prefix=audio_path.stem, dir='/tmp')
         try:
             bucket = store.bucket(AUDIO_BUCKET)
         except ValueError as e:
             raise ValueError(f"Could not find bucket {AUDIO_BUCKET}; set AUDIO_BUCKET env var to existing bucket") from e
-        blob = bucket.blob(audio_path)
+        blob = bucket.blob(str(audio_path))
         logger.trace("Downloading bytes...")
         blob.download_to_filename(tmp)
     return tmp

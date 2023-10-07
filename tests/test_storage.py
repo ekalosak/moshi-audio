@@ -20,5 +20,5 @@ def test_upload_download_both_work(store: Client, dummy_file: Path):
     tmp = storage.download(TEST_FN, store)
     with open(tmp, 'r') as f:
         assert f.read() == expected_contents
-    store.get_bucket(storage.AUDIO_BUCKET).delete_blob(TEST_FN)
+    store.bucket(storage.AUDIO_BUCKET).delete_blob(TEST_FN)
     os.remove(tmp)
