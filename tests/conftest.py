@@ -12,6 +12,10 @@ DATA_DIR = TEST_ROOT / "data"
 def data_dir() -> Path:
     return DATA_DIR
 
+@pytest.fixture
+def dummy_file(data_dir: Path) -> Path:
+    return data_dir / "dummy.txt"
+
 AUDIO_FILES = [f for f in DATA_DIR.iterdir() if f.suffix in [".wav", ".m4a", ".flac"]]
 
 @pytest.fixture(params=AUDIO_FILES)

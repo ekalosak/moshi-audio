@@ -26,7 +26,10 @@ def download(audio_path: str, store: Client) -> str:
         afl = Path(audio_path)
         if tmp is None:
             _, tmp = tempfile.mkstemp(suffix=afl.suffix, prefix=afl.stem, dir='/tmp')
-        bucket = store.bucket(AUDIO_BUCKET)
+        try:
+            bucket = store.bucket(AUDIO_BUCKET)
+        except ValueError as e:
+            raise ValueError(f"Could not find bucket {AUDIO_BUCKET}; set AUDIO_BUCKET env var to existing bucket") from e
         blob = bucket.blob(audio_path)
         logger.trace("Downloading bytes...")
         blob.download_to_filename(tmp)
@@ -41,8 +44,10 @@ def upload(file_path: Path, storage_path: Path, store: Client, bucket_name: str=
         bucket: the storage bucket to upload to.
     """
     with logger.contextualize(file_path=file_path, storage_path=storage_path, bucket=bucket_name):
-        logger.trace("Creating objects...")
+        logger.debug("Creating objects...")
         bucket = store.bucket(bucket_name)
-        blob = bucket.blob(str(storage_path))
-        logger.trace("Uploading bytes...")
-        blob.upload_from_filename(str(file_path))
+        _upload_here = str(storage_path)
+        blob = bucket.blob(_upload_here)
+        _upload_me = str(file_path)
+        logger.debug(f"Uploading bytes: from {_upload_me} to {_upload_here}")
+        blob.upload_from_filename(_upload_me)
