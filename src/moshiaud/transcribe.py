@@ -1,17 +1,16 @@
-import os
+from pathlib import Path
 
 from google.cloud import speech as stt
-
 from loguru import logger
-from moshi import traced
 
+from moshi import traced
 from .exceptions import TranscriptionError
 
 client = stt.SpeechClient()
 logger.info(f"Speech client initialized")
 
 @traced
-def transcribe(aud: str | bytes, bcp47: str) -> str:
+def transcribe(aud: str | Path | bytes, bcp47: str) -> str:
     """Transcribe audio to text using Google Cloud Speech-to-Text.
     Args:
         - aud: audio GCP Storage path  e.g. "gs://moshi-audio/activities/1/1/1.wav"
@@ -22,8 +21,13 @@ def transcribe(aud: str | bytes, bcp47: str) -> str:
         - https://cloud.google.com/speech-to-text/docs/troubleshooting#returns_an_empty_response
             - Usually it's the emulator's mic being disabled...
     """
+    if isinstance(aud, Path):
+        aud = str(aud)
     with logger.contextualize(aud=aud if isinstance(aud, str) else 'bytes ommitted', bcp47=bcp47):
         if isinstance(aud, str):
+            if not aud.startswith('gs://'):
+                logger.debug("Appending 'gs://' to audio path.")
+                aud = 'gs://' + aud
             config = stt.RecognitionConfig(language_code=bcp47)
             audio = stt.RecognitionAudio(uri=aud)
         elif isinstance(aud, bytes):
