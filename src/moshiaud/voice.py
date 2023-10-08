@@ -28,6 +28,13 @@ class Voice(BaseVoice):
             if len(tts_voice.language_codes) > 1:
                 logger.warning(f"Voice ({tts_voice.name}) has multiple language codes, only using first: {tts_voice.language_codes}")
             super().__init__(bcp47=tts_voice.language_codes[0], **kwargs)
+        if not self._tts_voice:
+            self._tts_voice = tts.Voice(
+                name=self.model,
+                ssml_gender=self.gender,
+                natural_sample_rate_hertz=24000,
+                language_codes=[self.bcp47],
+            )
 
     def __eq__(self, other):
         if isinstance(other, Voice):
@@ -44,9 +51,9 @@ class Voice(BaseVoice):
     def docpath(self):
         return self.get_docpath(self.bcp47)
 
+    @classmethod
     @traced
-    @staticmethod
-    def list_voices(bcp47: str, db: Client) -> list[tts.Voice]:
+    def list_voices(cls, bcp47: str, db: Client) -> list['Voice']:
         """List all voices supported by ChatMoshi. Retrieve them from the Firebase document /config/voices.
         If that doc doesn't exist, then list all voices from Google Cloud Text-to-Speech.
         Args:
@@ -56,12 +63,7 @@ class Voice(BaseVoice):
         doc = db.collection("config").document("voices").get()
         assert doc.exists, "Voices document doesn't exist."
         _voices = doc.to_dict()[bcp47]
-        voices = [tts.Voice(
-            name=name,
-            ssml_gender=model['gender'],
-            natural_sample_rate_hertz=24000,
-            language_codes=[bcp47],
-        ) for name, model in _voices.items()]
+        voices = [cls(**v) for v in _voices.values()]
         return voices
 
     @classmethod
