@@ -64,10 +64,10 @@ class Voice(BaseVoice):
         assert doc.exists, "Voices document doesn't exist."
         _voices = doc.to_dict()[bcp47]
         voices = [cls(**v) for v in _voices.values()]
-        return voices
+        return sorted(voices, key=lambda v: v.model)
 
     @classmethod
-    def get_voice(cls, bcp47: str, gender=None, model="Standard") -> 'Voice':
+    def get_voice(cls, bcp47: str, db: Client, gender=2, model="Standard") -> 'Voice':
         """Get a valid voice for the language. Just picks the first match.
         Args:
             - bcp47: Language code in BPC 47 format e.g. "en-US" https://www.rfc-editor.org/rfc/bcp/bcp47.txt
@@ -78,27 +78,14 @@ class Voice(BaseVoice):
         Source:
             - https://cloud.google.com/text-to-speech/pricing for list of valid voice model classes
         """
-        ...
-        # logger.debug(f"Getting voice for: {bcp47}")
-        # voc: list[Voice] = Voice.list_voices(bcp47)
-        # logger.debug(f"Language {bcp47} has {len(voices)} supported voices.")
-        # model_matches = []
-        # ...
-        # # for voice in voices:
-        # #     if model.lower() == voice.model
-        # #         model_matches.append(voice)
-        # # if len(model_matches) == 0:
-        # #     logger.warning(f"No voice found for model={model}, using any model.")
-        # #     model_matches = voices
-        # # gender_matches = []
-        # # for voice in model_matches:
-        # #     if voice.
-        # # if len(gender_matches) == 0:
-        # #     logger.warning(f"No voice found for gender={gender}, using any model.")
-        # #     gender_matches = model_matches
-        # # voices = gender_matches
-        # # if len(voices) > 0:
-        # #     voice = random.choice(voices)
-        # #     logger.debug(f"Found voice: ({voice.name} {voice.ssml_gender})")
-        # #     return voice
-        # # raise ValueError(f"Voice not found for {bcp47}, gender={gender}, model={model}")
+        with logger.contextualize(bcp47=bcp47, gender=gender, voice_model=model):
+            voices = cls.list_voices(bcp47, db)
+            logger.info(f"Found {len(voices)} voices for language: {bcp47}")
+            for voc in voices:
+                if voc.gender == gender and model in voc.model:
+                    return voc
+            logger.warning("No complete match found")
+            for voc in voices:
+                if model in voc.model:
+                    return voc
+            raise ValueError(f"No voice found for bcp47={bcp47} gender={gender} model={model}")
