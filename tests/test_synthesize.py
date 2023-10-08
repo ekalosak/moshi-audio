@@ -4,7 +4,13 @@ from google.cloud.firestore import Client
 from google.cloud import texttospeech as tts
 import pytest
 
-from moshiaud import audio, voice, synthesize
+from moshiaud import audio, synthesize
+from moshiaud.voice import Voice
+
+@pytest.fixture(params=["en-US-Standard-A", "yue-HK-Standard-A"])
+def voice(request) -> tts.Voice:
+    voc = Voice(request.param)
+    return voc.tts
 
 @pytest.mark.gcp
 def test_synthesize(db: Client):

@@ -5,6 +5,12 @@ import pytest
 
 from moshiaud import voice
 
+@pytest.mark.parametrize("bcp47,model", [("zh-Hans-CN", "cmn-CN-Standard-A"), ("en-US", "en-US-Standard-A"), ("yue-Hant-HK", "yue-HK-Standard-A")])
+def test_default_voice(bcp47: str, model: str):
+    voc = voice.Voice(bcp47, model)
+    assert voc.bcp47 == bcp47
+    assert voc.type in ['Standard', 'WaveNet']
+
 @pytest.mark.fs
 @pytest.mark.parametrize("bcp47", ["es-MX", "zh-Hans-CN", "en-US", "yue-Hant-HK", "ar-AE"])
 def test_list_voices(bcp47):
