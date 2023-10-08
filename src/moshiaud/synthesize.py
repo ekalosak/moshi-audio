@@ -6,6 +6,7 @@ from loguru import logger
 
 from moshi import traced
 from . import audio
+from .voice import Voice
 
 GOOGLE_SPEECH_SYNTHESIS_TIMEOUT = int(os.getenv("GOOGLE_SPEECH_SYNTHESIS_TIMEOUT", 5))
 
@@ -45,7 +46,7 @@ def _synthesize_af(text: str, voice: tts.Voice, rate: int = 24000) -> av.AudioFr
     return audio_frame
 
 @traced
-def synthesize(text: str, voice: tts.Voice, rate: int = 24000, to="audio_frame") -> av.AudioFrame | bytes:
+def synthesize(text: str, voice: Voice, rate: int = 24000, to="audio_frame") -> av.AudioFrame | bytes:
     """Synthesize speech to an AudioFrame or Storage.
     Returns:
         - AudioFrame: if to == "audio_frame"
@@ -53,6 +54,7 @@ def synthesize(text: str, voice: tts.Voice, rate: int = 24000, to="audio_frame")
     Raises:
         - ValueError if to is invalid.
     """
+    voice = voice._tts_voice
     with logger.contextualize(text=text, voice=voice, rate=rate, to=to):
         if to == "audio_frame":
             result = _synthesize_af(text, voice, rate)

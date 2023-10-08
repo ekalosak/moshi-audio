@@ -15,7 +15,7 @@ def voice(request) -> tts.Voice:
 @pytest.mark.gcp
 def test_synthesize(db: Client):
     msg = "Hello"
-    voc = voice.Voice.read("en-US", db)
-    af = synthesize.synthesize(msg, voice)
+    voc = Voice.get_voice("en-US", db)
+    af = synthesize.synthesize(msg, voc)
     assert af.rate == 24000
     print(f"Test wav length: {audio.seconds(af)}")
