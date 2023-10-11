@@ -45,6 +45,10 @@ class Voice(BaseVoice):
     def _kwargs_from_docpath(cls, docpath: DocPath) -> dict:
         return dict(bcp47=docpath.parts[2]) 
 
+    @classmethod
+    def from_base_voice(cls, base_voice: BaseVoice) -> 'Voice':
+        return cls(base_voice.bcp47, base_voice.model)
+
     def get_docpath(bcp47: str) -> DocPath:
         return DocPath(f"/config/voices/{bcp47}")
 

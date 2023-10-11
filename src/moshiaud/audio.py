@@ -100,6 +100,3 @@ def make_ast_audio_name(usr_audio_storage_name: str) -> str:
     ast_audio_storage_name = str(result.with_stem(new_stem).with_suffix(".wav"))
     logger.debug(f"Made ast audio name: {ast_audio_storage_name}")
     return ast_audio_storage_name
-
-
-logger.success("Audio module loaded.")
